@@ -3,7 +3,8 @@ from .interpolant import interpolant
 
 
 def generate_perlin_noise_2d(
-        shape, res, tileable=(False, False), interpolant=interpolant
+        shape, res, tileable=(False, False), interpolant=interpolant,
+        dtype=cp.float32
 ):
     """
     Generate a 2D numpy array of perlin noise.
@@ -24,10 +25,10 @@ def generate_perlin_noise_2d(
     """
     delta = (res[0] / shape[0], res[1] / shape[1])
     d = (shape[0] // res[0], shape[1] // res[1])
-    grid = cp.mgrid[0:res[0]:delta[0], 0:res[1]:delta[1]]\
+    grid = cp.mgrid[0:res[0]:delta[0], 0:res[1]:delta[1]].astype(dtype)\
              .transpose(1, 2, 0) % 1
     # Gradients
-    angles = 2*cp.pi*cp.random.rand(res[0]+1, res[1]+1)
+    angles = 2*cp.pi*cp.random.rand(res[0]+1, res[1]+1, dtype=dtype)
     gradients = cp.dstack((cp.cos(angles), cp.sin(angles)))
     if tileable[0]:
         gradients[-1,:] = gradients[0,:]
@@ -53,7 +54,8 @@ def generate_perlin_noise_2d(
 def generate_fractal_noise_2d(
         shape, res, octaves=1, persistence=0.5,
         lacunarity=2, tileable=(False, False),
-        interpolant=interpolant
+        interpolant=interpolant,
+        dtype=cp.float32
 ):
     """
     Generate a 2D numpy array of fractal noise.
@@ -77,7 +79,7 @@ def generate_fractal_noise_2d(
         ValueError: If shape is not a multiple of
             (lacunarity**(octaves-1)*res).
     """
-    noise = cp.zeros(shape)
+    noise = cp.zeros(shape, dtype=dtype)
     frequency = 1
     amplitude = 1
     for _ in range(octaves):

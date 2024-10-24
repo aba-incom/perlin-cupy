@@ -4,7 +4,8 @@ from .interpolant import interpolant
 
 def generate_perlin_noise_3d(
         shape, res, tileable=(False, False, False),
-        interpolant=interpolant
+        interpolant=interpolant,
+        dtype=cp.float32
 ):
     """Generate a 3D numpy array of perlin noise.
     Args:
@@ -24,12 +25,11 @@ def generate_perlin_noise_3d(
     """
     delta = (res[0] / shape[0], res[1] / shape[1], res[2] / shape[2])
     d = (shape[0] // res[0], shape[1] // res[1], shape[2] // res[2])
-    grid = cp.mgrid[0:res[0]:delta[0],0:res[1]:delta[1],0:res[2]:delta[2]]
-    grid = cp.mgrid[0:res[0]:delta[0],0:res[1]:delta[1],0:res[2]:delta[2]]
+    grid = cp.mgrid[0:res[0]:delta[0],0:res[1]:delta[1],0:res[2]:delta[2]].astype(dtype)
     grid = grid.transpose(1, 2, 3, 0) % 1
     # Gradients
-    theta = 2*cp.pi*cp.random.rand(res[0] + 1, res[1] + 1, res[2] + 1)
-    phi = 2*cp.pi*cp.random.rand(res[0] + 1, res[1] + 1, res[2] + 1)
+    theta = 2*cp.pi*cp.random.rand(res[0] + 1, res[1] + 1, res[2] + 1, dtype=dtype)
+    phi = 2*cp.pi*cp.random.rand(res[0] + 1, res[1] + 1, res[2] + 1, dtype=dtype)
     gradients = cp.stack(
         (cp.sin(phi)*cp.cos(theta), cp.sin(phi)*cp.sin(theta), cp.cos(phi)),
         axis=3
@@ -71,7 +71,8 @@ def generate_perlin_noise_3d(
 
 def generate_fractal_noise_3d(
         shape, res, octaves=1, persistence=0.5, lacunarity=2,
-        tileable=(False, False, False), interpolant=interpolant
+        tileable=(False, False, False), interpolant=interpolant,
+        dtype=cp.float32
 ):
     """Generate a 3D numpy array of fractal noise.
     Args:
@@ -94,7 +95,7 @@ def generate_fractal_noise_3d(
         ValueError: If shape is not a multiple of
             (lacunarity**(octaves-1)*res).
     """
-    noise = cp.zeros(shape)
+    noise = cp.zeros(shape, dtype=dtype)
     frequency = 1
     amplitude = 1
     for _ in range(octaves):
